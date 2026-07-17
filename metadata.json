@@ -1,0 +1,6 @@
+{
+  "name": "SkinSense",
+  "description": "AI-powered multilingual skin health assistant and doctor portal with tiered care plans, medicine reminders, and clinical tracking.",
+  "requestFramePermissions": ["camera", "microphone", "geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
