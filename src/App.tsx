@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { PhoneSimulator } from "./components/PhoneSimulator";
-import { DoctorDashboard } from "./components/DoctorDashboard";
 import { Case } from "./types";
-import { Activity, ShieldCheck, Sparkles, HelpCircle, Laptop } from "lucide-react";
+import { Activity, ShieldCheck, Sparkles, HelpCircle, Smartphone } from "lucide-react";
 
 export default function App() {
   // Shared full-stack case logs state
@@ -10,14 +9,11 @@ export default function App() {
   const [activeCaseId, setActiveCaseId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Split View Controller: toggling between Mobile Simulator and Widescreen Hospital Portal
-  const [currentView, setCurrentView] = useState<'mobile' | 'doctor'>('mobile');
-
   // Load patient logs from Node Express backend on mount
   useEffect(() => {
     fetchCases();
     
-    // Quick polling to simulate live web socket updates so prescription approvals update instantly
+    // Quick polling to simulate live updates so prescription approvals update instantly
     const interval = setInterval(fetchCases, 4000);
     return () => clearInterval(interval);
   }, []);
@@ -85,7 +81,7 @@ export default function App() {
     }
   };
 
-  // Correspondence chat callbacks
+  // Correspondence chat callbacks with auto-doctor-response simulation
   const handlePatientMessageSent = async (caseId: string, text: string) => {
     try {
       const response = await fetch(`/api/cases/${caseId}/chat`, {
@@ -95,20 +91,30 @@ export default function App() {
       });
       const updatedCase = await response.json();
       setCases(prev => prev.map(c => c.id === caseId ? updatedCase : c));
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
-  const handleDoctorMessageSent = async (caseId: string, text: string) => {
-    try {
-      const response = await fetch(`/api/cases/${caseId}/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sender: "doctor", text })
-      });
-      const updatedCase = await response.json();
-      setCases(prev => prev.map(c => c.id === caseId ? updatedCase : c));
+      // Simulate clinical reply from the physician shortly after
+      setTimeout(async () => {
+        try {
+          const doctorReplies = [
+            "Hello, I am reviewing your case now. Please apply the Level 2 OTC cream as directed in the meantime.",
+            "I have examined your skin photographs. I will sign and approve your clinical prescription details shortly.",
+            "Please log daily check-ins on the tracker tab so we can check if it is improving over the next 3 days.",
+            "Understood. If you feel any sudden warmth, fever, or the rash spreads rapidly, proceed to the nearest clinic.",
+            "I have signed and approved your customized Tier 3 prescription. Please view the updated schedule in your reminders tab!"
+          ];
+          const randomReply = doctorReplies[Math.floor(Math.random() * doctorReplies.length)];
+          const docResponse = await fetch(`/api/cases/${caseId}/chat`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sender: "doctor", text: randomReply })
+          });
+          const latestCase = await docResponse.json();
+          setCases(prev => prev.map(c => c.id === caseId ? latestCase : c));
+        } catch (chatErr) {
+          console.error("Auto doctor reply error:", chatErr);
+        }
+      }, 1500);
+
     } catch (err) {
       console.error(err);
     }
@@ -126,36 +132,16 @@ export default function App() {
           <div>
             <div className="flex items-center gap-2">
               <span className="text-base font-bold text-white tracking-tight">SkinSense Console</span>
-              <span className="text-[10px] bg-indigo-500/10 text-indigo-400 font-bold px-1.5 py-0.2 rounded font-mono">v1.2.0</span>
+              <span className="text-[10px] bg-indigo-500/10 text-indigo-400 font-bold px-1.5 py-0.2 rounded font-mono">v1.3.0</span>
             </div>
             <p className="text-[10px] text-slate-400">AI-Powered Multi-Tier Clinical Dermatology Workspace</p>
           </div>
         </div>
 
-        {/* Unified View Toggle Selector */}
-        <div className="flex bg-slate-900 border border-slate-850 p-1.5 rounded-2xl gap-2">
-          <button
-            id="toggle-view-mobile"
-            onClick={() => setCurrentView('mobile')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-              currentView === 'mobile' 
-                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/15' 
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            📱 Simulate Patient App
-          </button>
-          <button
-            id="toggle-view-doctor"
-            onClick={() => setCurrentView('doctor')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-              currentView === 'doctor' 
-                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/15' 
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            👩‍⚕️ Simulate Doctor Portal
-          </button>
+        {/* Brand App badge */}
+        <div className="hidden sm:flex items-center gap-2 bg-slate-900/90 border border-slate-800 px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-300">
+          <Smartphone className="w-4 h-4 text-indigo-400 animate-pulse" />
+          <span>Patient App Simulator Mode</span>
         </div>
 
         {/* Security Shield Indicator */}
@@ -165,7 +151,7 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main split work canvas */}
+      {/* Main work canvas */}
       <main className="flex-1 p-6 flex flex-col items-center justify-center max-w-7xl w-full mx-auto">
         
         {isLoading ? (
@@ -177,46 +163,31 @@ export default function App() {
           <div className="w-full flex flex-col items-center justify-center">
             
             {/* Quick Interactive Workspace Guide */}
-            <div className="w-full max-w-4xl bg-slate-900/30 border border-slate-850/60 p-4 rounded-2xl mb-6 text-xs flex justify-between items-center gap-4">
+            <div className="w-full max-w-xl bg-slate-900/30 border border-slate-850/60 p-4 rounded-2xl mb-6 text-xs flex justify-between items-center gap-4">
               <div className="flex gap-2.5 items-start">
                 <HelpCircle className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <p className="font-bold text-slate-100">DermAI Clinical Sandbox Guide</p>
+                  <p className="font-bold text-slate-100">SkinSense Sandbox Guide</p>
                   <p className="text-slate-400 leading-normal">
-                    This workspace simulates both the **SkinSense Patient Mobile App** and the **Clinician Web Dashboard** simultaneously. Submit a skin case in the mobile app, and watch it appear instantly in the Doctor's dashboard case queue. Edit and sign the prescription as the Doctor, and see the patient's mobile app reminders automatically schedule!
+                    Submit a skin test in the mobile app below. You can simulate direct chat messages with our dermatologist, trigger **Simulated Physician Approvals** on prescriptions to unlock the smart dosing schedule, and track healing over time.
                   </p>
                 </div>
               </div>
-              <div className="hidden md:flex gap-1.5 shrink-0 bg-slate-900 px-3 py-1.5 border border-slate-800 rounded-xl font-mono text-[10px] font-bold text-slate-300">
-                <Laptop className="w-3.5 h-3.5 text-indigo-400" />
-                <span>Dual Sandbox Syncing Active</span>
-              </div>
             </div>
 
-            {/* Render selected view */}
+            {/* Render Patient Simulator */}
             <div className="w-full flex justify-center items-start animate-fade-in">
-              {currentView === 'mobile' ? (
-                <div className="w-full flex justify-center">
-                  <PhoneSimulator 
-                    cases={cases}
-                    onNewCaseSubmitted={handleNewCaseSubmitted}
-                    onCheckInSubmitted={handleCheckInSubmitted}
-                    onPatientMessageSent={handlePatientMessageSent}
-                    activeCaseId={activeCaseId}
-                    setActiveCaseId={setActiveCaseId}
-                  />
-                </div>
-              ) : (
-                <div className="w-full">
-                  <DoctorDashboard 
-                    cases={cases}
-                    activeCaseId={activeCaseId}
-                    setActiveCaseId={setActiveCaseId}
-                    onApprovePrescription={handleApprovePrescription}
-                    onDoctorMessageSent={handleDoctorMessageSent}
-                  />
-                </div>
-              )}
+              <div className="w-full flex justify-center">
+                <PhoneSimulator 
+                  cases={cases}
+                  onNewCaseSubmitted={handleNewCaseSubmitted}
+                  onCheckInSubmitted={handleCheckInSubmitted}
+                  onPatientMessageSent={handlePatientMessageSent}
+                  onApprovePrescription={handleApprovePrescription}
+                  activeCaseId={activeCaseId}
+                  setActiveCaseId={setActiveCaseId}
+                />
+              </div>
             </div>
 
           </div>

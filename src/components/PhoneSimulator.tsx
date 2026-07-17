@@ -104,6 +104,7 @@ interface PhoneSimulatorProps {
   onNewCaseSubmitted: (newCase: Case) => void;
   onCheckInSubmitted: (caseId: string, status: 'improving' | 'no-change' | 'worse', photoUrl: string, notes: string) => void;
   onPatientMessageSent: (caseId: string, message: string) => void;
+  onApprovePrescription?: (caseId: string, prescription: any) => void;
   activeCaseId: string | null;
   setActiveCaseId: (id: string | null) => void;
 }
@@ -113,6 +114,7 @@ export function PhoneSimulator({
   onNewCaseSubmitted,
   onCheckInSubmitted,
   onPatientMessageSent,
+  onApprovePrescription,
   activeCaseId,
   setActiveCaseId
 }: PhoneSimulatorProps) {
@@ -1126,11 +1128,33 @@ export function PhoneSimulator({
                         </div>
                       </div>
                     ) : (
-                      <div className="space-y-2 py-1">
+                      <div className="space-y-2.5 py-1">
                         <p className="text-[10px] text-slate-400 leading-normal">{t.level3Pending}</p>
-                        <div className="flex items-center gap-1 bg-slate-900/50 p-2 rounded-lg">
-                          <div className="w-2 h-2 rounded-full bg-indigo-500 animate-ping"></div>
-                          <span className="text-[10px] text-indigo-300 font-medium">Doctor review queued...</span>
+                        <div className="flex flex-col gap-2.5 bg-slate-900/50 p-2.5 rounded-xl border border-slate-800/80">
+                          <div className="flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-ping"></div>
+                            <span className="text-[10px] text-indigo-300 font-semibold font-mono">Dermatologist Review Queued</span>
+                          </div>
+                          {onApprovePrescription && (
+                            <button
+                              id="btn-simulate-prescription-sign"
+                              onClick={() => {
+                                onApprovePrescription(activeCase.id, {
+                                  medicine: activeCase.carePlan?.level3?.medicine || "Hydrocortisone 2.5% Ointment",
+                                  dosage: activeCase.carePlan?.level3?.dosage || "Apply a small pea-sized amount to the lesion",
+                                  frequency: activeCase.carePlan?.level3?.frequency || "Twice daily",
+                                  mealRelation: activeCase.carePlan?.level3?.mealRelation || "after",
+                                  duration: activeCase.carePlan?.level3?.duration || "7 days",
+                                  specialNotes: "Wash hands thoroughly before and after application. Avoid eyes.",
+                                  doctorName: "Dr. Catherine Shaw, MD",
+                                  doctorSignature: "Catherine Shaw"
+                                });
+                              }}
+                              className="w-full py-1.5 px-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-[10px] font-bold shadow-md shadow-indigo-600/10 flex items-center justify-center gap-1.5"
+                            >
+                              ⚡ Simulate Physician Approval
+                            </button>
+                          )}
                         </div>
                       </div>
                     )}
